@@ -5,8 +5,9 @@ when the document does not contain the field; we never fill it with a guess.
 schema/change_order.schema.json is generated from these classes, so the published
 schema and the code cannot drift apart.
 """
+
 import datetime as dt
-from enum import Enum
+from enum import StrEnum
 from typing import Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -14,7 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field
 T = TypeVar("T")
 
 
-class ApprovalStatus(str, Enum):
+class ApprovalStatus(StrEnum):
     approved = "approved"
     pending = "pending"
     rejected = "rejected"
@@ -53,7 +54,9 @@ class ChangeOrderExtraction(BaseModel):
         description="Change to the contract price in the document's currency: increase positive, decrease negative."
     )
     schedule_impact_days: Extracted[int] = Field(
-        description="Change to the contract time in calendar days: extension positive, reduction negative, 0 for no change."
+        description=(
+            "Change to the contract time in calendar days: extension positive, reduction negative, 0 for no change."
+        )
     )
     approval_status: Extracted[ApprovalStatus]
     needs_review: bool = Field(

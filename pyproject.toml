@@ -1,0 +1,29 @@
+[project]
+name = "co-extract"
+version = "0.1.0"
+description = "Extract validated JSON from messy construction change orders"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.11"
+mypy_path = "src"
+packages = ["co_extract"]
+strict = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["pdfplumber", "pdfplumber.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
