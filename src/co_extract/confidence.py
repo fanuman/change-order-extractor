@@ -80,14 +80,16 @@ _FIELD_LABELS: dict[str, re.Pattern[str]] = {
     name: re.compile(pattern, re.IGNORECASE)
     for name, pattern in {
         "project_name": r"\bproject\b|\bjob\b",
-        "contract_number": r"\bcontract\s*(?:no\b|number|#)",
+        "contract_number": r"\bcontract\s*(?:no\b|number|#|:)",
         "change_order_number": r"\bchange\s*order\s*(?:no\b|number|#)|\bC\.?O\.?\s*(?:no\b|#)",
         "date": r"\bdate[d]?\b",
         "requested_by": r"\brequested\s+by\b|\binitiated\s+by\b|\brequestor\b",
         "description": r"\bdescription\b|\bscope\b",
         "amount": r"\bamount\b|\btotal\b|\bcost\b|\bprice\b|\$",
         "schedule_impact_days": r"\bcontract\s+time\b|\bschedule\b|\bcompletion\s+date\b|\bdays\b",
-        "approval_status": r"\bapprov|\bstatus\b|\bsignature\b|\bsigned\b",
+        # approval words, or a signature block: a role followed by a signature or a blank line
+        "approval_status": r"\bapprov|\bstatus\b|\bsignature\b|\bsigned\b"
+        r"|\b(?:owner|architect|contractor|engineer)\s*:?\s*(?:/s/|_{3,})",
     }.items()
 }
 

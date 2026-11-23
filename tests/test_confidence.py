@@ -126,6 +126,10 @@ def test_review_threshold(confidence: float, low: bool) -> None:
         ("amount", "Total: $1,250.00", True),
         ("schedule_impact_days", "Contract time: No change", True),
         ("approval_status", "Owner signature: ______", True),
+        ("approval_status", "Owner: ____________      Contractor: /s/ D. Kim", True),
+        ("approval_status", "Architect /s/ L. Hale", True),
+        ("approval_status", "Requested by: ________", False),  # a blank line alone is not an approval section
+        ("contract_number", "Contract: WTC-2201", True),
         ("project_name", "Riverside Library Renovation", False),
         ("unknown_field", "anything", False),
     ],
