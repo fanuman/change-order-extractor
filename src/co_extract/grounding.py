@@ -19,7 +19,7 @@ from enum import StrEnum
 from co_extract.prompts import Quoted
 
 # Typographic characters and their plain equivalents. Written as code points so the source stays ASCII.
-_PLAIN_PUNCTUATION = str.maketrans(
+PLAIN_PUNCTUATION = str.maketrans(
     {
         0x2018: "'",  # left single quotation mark
         0x2019: "'",  # right single quotation mark
@@ -101,7 +101,7 @@ def _normalize_with_positions(text: str) -> tuple[str, list[int]]:
                 positions.append(index)
                 after_space = True
             continue
-        for plain in char.translate(_PLAIN_PUNCTUATION).casefold():
+        for plain in char.translate(PLAIN_PUNCTUATION).casefold():
             chars.append(plain)
             positions.append(index)
         after_space = False
