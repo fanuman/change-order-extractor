@@ -131,6 +131,7 @@ class ChangeOrderPipeline:
         self, fields: dict[str, FieldResult], findings: list[Finding], document_text: str
     ) -> dict[str, float]:
         """Confidence for each field, from its grounding, issues and validation findings."""
+        document_findings = _messages_for(None, findings)  # a problem with the whole document lowers every field
         return {
             name: field_confidence(
                 FieldEvidence(
@@ -138,7 +139,7 @@ class ChangeOrderPipeline:
                     has_value=result.value is not None,
                     quote=result.quoted.quote,
                     normalization_issues=tuple(result.issues),
-                    validation_findings=_messages_for(name, findings),
+                    validation_findings=(*_messages_for(name, findings), *document_findings),
                     mentioned_in_document=is_mentioned(name, document_text),
                 )
             )

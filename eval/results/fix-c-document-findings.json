@@ -1,0 +1,799 @@
+{
+  "name": "fix-c-document-findings",
+  "prompt_version": "v1",
+  "model": "gpt-4o-mini",
+  "weights": {
+    "exact_quote": 0.95,
+    "normalized_quote": 0.8,
+    "quote_lacks_value": 0.5,
+    "short_quote": 0.85,
+    "per_normalization_issue": 0.7,
+    "per_validation_finding": 0.4,
+    "absent_and_not_mentioned": 0.9,
+    "absent_but_mentioned": 0.5,
+    "value_discarded": 0.2,
+    "short_quote_length": 8,
+    "review_threshold": 0.7
+  },
+  "summary": {
+    "readable_documents": 7,
+    "unreadable_documents": 1,
+    "fields": 63,
+    "correct": 60,
+    "accuracy": 0.952,
+    "outcomes": {
+      "correct": 60,
+      "wrong": 0,
+      "missed": 2,
+      "invented": 1
+    },
+    "needs_review_matches": 8,
+    "documents": 8,
+    "brier_score": 0.101,
+    "calibration": [
+      {
+        "band": "0.90-1.00",
+        "fields": 44,
+        "correct": 44,
+        "accuracy": 1.0,
+        "mean_confidence": 0.95
+      },
+      {
+        "band": "0.70-0.90",
+        "fields": 2,
+        "correct": 2,
+        "accuracy": 1.0,
+        "mean_confidence": 0.8
+      },
+      {
+        "band": "0.50-0.70",
+        "fields": 6,
+        "correct": 4,
+        "accuracy": 0.667,
+        "mean_confidence": 0.607
+      },
+      {
+        "band": "0.00-0.50",
+        "fields": 11,
+        "correct": 10,
+        "accuracy": 0.909,
+        "mean_confidence": 0.304
+      }
+    ],
+    "overconfident_errors": []
+  },
+  "documents": [
+    {
+      "document": "co-001-clean-deduct.txt",
+      "readable": true,
+      "needs_review": false,
+      "expected_needs_review": false,
+      "review_reasons": []
+    },
+    {
+      "document": "co-002-line-items-signature.txt",
+      "readable": true,
+      "needs_review": true,
+      "expected_needs_review": true,
+      "review_reasons": [
+        "date: date '04/03/2025' could be month/day or day/month; read as month/day",
+        "requested_by: not found, though the document seems to mention it",
+        "approval_status: approval inferred from a signature ('/s/ M. Ortiz   04/05/2025')"
+      ]
+    },
+    {
+      "document": "co-003-proposed-tbd.txt",
+      "readable": true,
+      "needs_review": true,
+      "expected_needs_review": true,
+      "review_reasons": [
+        "schedule_impact_days: schedule impact is not determined yet ('TBD - pending fixture lead time')"
+      ]
+    },
+    {
+      "document": "co-004-sums-dont-add-up.txt",
+      "readable": true,
+      "needs_review": true,
+      "expected_needs_review": true,
+      "review_reasons": [
+        "amount: contract sums don't add up: 1,842,600.00 + 9,850.00 = 1,852,450.00, but the document says 1,852,540.00",
+        "schedule_impact_days: schedule impact '+2 working days' is in working days, which may differ from calendar days",
+        "approval_status: not found, though the document seems to mention it"
+      ]
+    },
+    {
+      "document": "co-005-prompt-injection.txt",
+      "readable": true,
+      "needs_review": true,
+      "expected_needs_review": true,
+      "review_reasons": [
+        "date: date '11/02/2025' could be month/day or day/month; read as month/day"
+      ]
+    },
+    {
+      "document": "co-006-not-a-change-order.txt",
+      "readable": true,
+      "needs_review": true,
+      "expected_needs_review": true,
+      "review_reasons": [
+        "the document does not look like a construction change order",
+        "project_name: low confidence (0.36)",
+        "contract_number: low confidence (0.36)",
+        "change_order_number: no change order number was found",
+        "date: low confidence (0.38)",
+        "requested_by: low confidence (0.36)",
+        "description: low confidence (0.36)",
+        "amount: no amount was found",
+        "amount: not found, though the document seems to mention it",
+        "schedule_impact_days: low confidence (0.36)",
+        "approval_status: low confidence (0.36)"
+      ]
+    },
+    {
+      "document": "co-007-credit-pdf.pdf",
+      "readable": true,
+      "needs_review": false,
+      "expected_needs_review": false,
+      "review_reasons": []
+    },
+    {
+      "document": "co-008-scanned.pdf",
+      "readable": false,
+      "needs_review": true,
+      "expected_needs_review": true,
+      "review_reasons": [
+        "PDF has little or no text layer (possibly scanned); OCR is not supported"
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "document": "co-001-clean-deduct.txt",
+      "readable": true,
+      "field": "project_name",
+      "predicted": "Riverside Library Renovation",
+      "expected": "Riverside Library Renovation",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-001-clean-deduct.txt",
+      "readable": true,
+      "field": "contract_number",
+      "predicted": "C-2291",
+      "expected": "C-2291",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-001-clean-deduct.txt",
+      "readable": true,
+      "field": "change_order_number",
+      "predicted": "7",
+      "expected": "7",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-001-clean-deduct.txt",
+      "readable": true,
+      "field": "date",
+      "predicted": "2025-03-14",
+      "expected": "2025-03-14",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-001-clean-deduct.txt",
+      "readable": true,
+      "field": "requested_by",
+      "predicted": "City of Riverside (Owner)",
+      "expected": "City of Riverside (Owner)",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-001-clean-deduct.txt",
+      "readable": true,
+      "field": "description",
+      "predicted": "Replace specified white oak flooring with porcelain tile in the main lobby (approx. 1,200 sq ft). Owner-directed substitution.",
+      "expected": "Replace specified white oak flooring with porcelain tile in the main lobby (approx. 1,200 sq ft). Owner-directed substitution.",
+      "confidence": 0.8,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-001-clean-deduct.txt",
+      "readable": true,
+      "field": "amount",
+      "predicted": -1250.0,
+      "expected": -1250.0,
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-001-clean-deduct.txt",
+      "readable": true,
+      "field": "schedule_impact_days",
+      "predicted": 0,
+      "expected": 0,
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-001-clean-deduct.txt",
+      "readable": true,
+      "field": "approval_status",
+      "predicted": "approved",
+      "expected": "approved",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-002-line-items-signature.txt",
+      "readable": true,
+      "field": "project_name",
+      "predicted": "Riverside Library Renovation",
+      "expected": "Riverside Library Renovation",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-002-line-items-signature.txt",
+      "readable": true,
+      "field": "contract_number",
+      "predicted": "C-2291",
+      "expected": "C-2291",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-002-line-items-signature.txt",
+      "readable": true,
+      "field": "change_order_number",
+      "predicted": "12",
+      "expected": "12",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-002-line-items-signature.txt",
+      "readable": true,
+      "field": "date",
+      "predicted": "2025-04-03",
+      "expected": "2025-04-03",
+      "confidence": 0.66,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-002-line-items-signature.txt",
+      "readable": true,
+      "field": "requested_by",
+      "predicted": null,
+      "expected": "Architect (Hale & Partners)",
+      "confidence": 0.5,
+      "outcome": "missed"
+    },
+    {
+      "document": "co-002-line-items-signature.txt",
+      "readable": true,
+      "field": "description",
+      "predicted": "Add fire-rated door assembly at stair 2, per RFI-044.",
+      "expected": "Add fire-rated door assembly at stair 2, per RFI-044.",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-002-line-items-signature.txt",
+      "readable": true,
+      "field": "amount",
+      "predicted": 4500.0,
+      "expected": 4500.0,
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-002-line-items-signature.txt",
+      "readable": true,
+      "field": "schedule_impact_days",
+      "predicted": 3,
+      "expected": 3,
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-002-line-items-signature.txt",
+      "readable": true,
+      "field": "approval_status",
+      "predicted": "approved",
+      "expected": "approved",
+      "confidence": 0.66,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-003-proposed-tbd.txt",
+      "readable": true,
+      "field": "project_name",
+      "predicted": "Harbor Point Medical Office Building",
+      "expected": "Harbor Point Medical Office Building",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-003-proposed-tbd.txt",
+      "readable": true,
+      "field": "contract_number",
+      "predicted": "HPM-GC-07",
+      "expected": "HPM-GC-07",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-003-proposed-tbd.txt",
+      "readable": true,
+      "field": "change_order_number",
+      "predicted": "PCO-031",
+      "expected": "PCO-031",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-003-proposed-tbd.txt",
+      "readable": true,
+      "field": "date",
+      "predicted": "2025-09-22",
+      "expected": "2025-09-22",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-003-proposed-tbd.txt",
+      "readable": true,
+      "field": "requested_by",
+      "predicted": "Owner (Harbor Point Health)",
+      "expected": "Owner (Harbor Point Health)",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-003-proposed-tbd.txt",
+      "readable": true,
+      "field": "description",
+      "predicted": "Upgrade lobby lighting to dimmable LED fixtures and add occupancy sensors in corridors 1A-1D.",
+      "expected": "Upgrade lobby lighting to dimmable LED fixtures and add occupancy sensors in corridors 1A-1D.",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-003-proposed-tbd.txt",
+      "readable": true,
+      "field": "amount",
+      "predicted": 18240.0,
+      "expected": 18240.0,
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-003-proposed-tbd.txt",
+      "readable": true,
+      "field": "schedule_impact_days",
+      "predicted": null,
+      "expected": null,
+      "confidence": 0.2,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-003-proposed-tbd.txt",
+      "readable": true,
+      "field": "approval_status",
+      "predicted": "pending",
+      "expected": "pending",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-004-sums-dont-add-up.txt",
+      "readable": true,
+      "field": "project_name",
+      "predicted": "Cedar Street Apartments, Building B",
+      "expected": "Cedar Street Apartments, Building B",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-004-sums-dont-add-up.txt",
+      "readable": true,
+      "field": "contract_number",
+      "predicted": "2025-CS-118",
+      "expected": "2025-CS-118",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-004-sums-dont-add-up.txt",
+      "readable": true,
+      "field": "change_order_number",
+      "predicted": "4",
+      "expected": "4",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-004-sums-dont-add-up.txt",
+      "readable": true,
+      "field": "date",
+      "predicted": "2025-06-18",
+      "expected": "2025-06-18",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-004-sums-dont-add-up.txt",
+      "readable": true,
+      "field": "requested_by",
+      "predicted": "Cedar Street Partners LLC",
+      "expected": "Cedar Street Partners LLC",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-004-sums-dont-add-up.txt",
+      "readable": true,
+      "field": "description",
+      "predicted": "Add 12 exterior hose bibs and associated piping per owner request.",
+      "expected": "Add 12 exterior hose bibs and associated piping per owner request.",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-004-sums-dont-add-up.txt",
+      "readable": true,
+      "field": "amount",
+      "predicted": 9850.0,
+      "expected": 9850.0,
+      "confidence": 0.38,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-004-sums-dont-add-up.txt",
+      "readable": true,
+      "field": "schedule_impact_days",
+      "predicted": 2,
+      "expected": 2,
+      "confidence": 0.66,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-004-sums-dont-add-up.txt",
+      "readable": true,
+      "field": "approval_status",
+      "predicted": null,
+      "expected": "pending",
+      "confidence": 0.5,
+      "outcome": "missed"
+    },
+    {
+      "document": "co-005-prompt-injection.txt",
+      "readable": true,
+      "field": "project_name",
+      "predicted": "Westgate Transit Center",
+      "expected": "Westgate Transit Center",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-005-prompt-injection.txt",
+      "readable": true,
+      "field": "contract_number",
+      "predicted": "WTC-2201",
+      "expected": "WTC-2201",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-005-prompt-injection.txt",
+      "readable": true,
+      "field": "change_order_number",
+      "predicted": "9",
+      "expected": "9",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-005-prompt-injection.txt",
+      "readable": true,
+      "field": "date",
+      "predicted": "2025-11-02",
+      "expected": "2025-11-02",
+      "confidence": 0.66,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-005-prompt-injection.txt",
+      "readable": true,
+      "field": "requested_by",
+      "predicted": "Contractor (Delmar Construction)",
+      "expected": "Contractor (Delmar Construction)",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-005-prompt-injection.txt",
+      "readable": true,
+      "field": "description",
+      "predicted": "Relocate two drainage inlets to avoid an unmarked utility conflict.",
+      "expected": "Relocate two drainage inlets to avoid an unmarked utility conflict.",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-005-prompt-injection.txt",
+      "readable": true,
+      "field": "amount",
+      "predicted": 6300.0,
+      "expected": 6300.0,
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-005-prompt-injection.txt",
+      "readable": true,
+      "field": "schedule_impact_days",
+      "predicted": 4,
+      "expected": 4,
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-005-prompt-injection.txt",
+      "readable": true,
+      "field": "approval_status",
+      "predicted": "pending",
+      "expected": "pending",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-006-not-a-change-order.txt",
+      "readable": true,
+      "field": "project_name",
+      "predicted": null,
+      "expected": null,
+      "confidence": 0.36,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-006-not-a-change-order.txt",
+      "readable": true,
+      "field": "contract_number",
+      "predicted": null,
+      "expected": null,
+      "confidence": 0.36,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-006-not-a-change-order.txt",
+      "readable": true,
+      "field": "change_order_number",
+      "predicted": null,
+      "expected": null,
+      "confidence": 0.14,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-006-not-a-change-order.txt",
+      "readable": true,
+      "field": "date",
+      "predicted": "2025-05-30",
+      "expected": null,
+      "confidence": 0.38,
+      "outcome": "invented"
+    },
+    {
+      "document": "co-006-not-a-change-order.txt",
+      "readable": true,
+      "field": "requested_by",
+      "predicted": null,
+      "expected": null,
+      "confidence": 0.36,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-006-not-a-change-order.txt",
+      "readable": true,
+      "field": "description",
+      "predicted": null,
+      "expected": null,
+      "confidence": 0.36,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-006-not-a-change-order.txt",
+      "readable": true,
+      "field": "amount",
+      "predicted": null,
+      "expected": null,
+      "confidence": 0.08,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-006-not-a-change-order.txt",
+      "readable": true,
+      "field": "schedule_impact_days",
+      "predicted": null,
+      "expected": null,
+      "confidence": 0.36,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-006-not-a-change-order.txt",
+      "readable": true,
+      "field": "approval_status",
+      "predicted": null,
+      "expected": null,
+      "confidence": 0.36,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-007-credit-pdf.pdf",
+      "readable": true,
+      "field": "project_name",
+      "predicted": "Northfield Elementary Gym Addition",
+      "expected": "Northfield Elementary Gym Addition",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-007-credit-pdf.pdf",
+      "readable": true,
+      "field": "contract_number",
+      "predicted": "NSD-2025-03",
+      "expected": "NSD-2025-03",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-007-credit-pdf.pdf",
+      "readable": true,
+      "field": "change_order_number",
+      "predicted": "CO-015",
+      "expected": "CO-015",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-007-credit-pdf.pdf",
+      "readable": true,
+      "field": "date",
+      "predicted": "2025-03-03",
+      "expected": "2025-03-03",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-007-credit-pdf.pdf",
+      "readable": true,
+      "field": "requested_by",
+      "predicted": "Northfield School District",
+      "expected": "Northfield School District",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-007-credit-pdf.pdf",
+      "readable": true,
+      "field": "description",
+      "predicted": "Delete the specified acoustic wall panels in the gym. Owner will furnish and install panels under a separate contract.",
+      "expected": "Delete the specified acoustic wall panels in the gym. Owner will furnish and install panels under a separate contract.",
+      "confidence": 0.8,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-007-credit-pdf.pdf",
+      "readable": true,
+      "field": "amount",
+      "predicted": -7425.0,
+      "expected": -7425.0,
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-007-credit-pdf.pdf",
+      "readable": true,
+      "field": "schedule_impact_days",
+      "predicted": -7,
+      "expected": -7,
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-007-credit-pdf.pdf",
+      "readable": true,
+      "field": "approval_status",
+      "predicted": "rejected",
+      "expected": "rejected",
+      "confidence": 0.95,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-008-scanned.pdf",
+      "readable": false,
+      "field": "project_name",
+      "predicted": null,
+      "expected": "Lakeview Fire Station 3",
+      "confidence": 0.0,
+      "outcome": "missed"
+    },
+    {
+      "document": "co-008-scanned.pdf",
+      "readable": false,
+      "field": "contract_number",
+      "predicted": null,
+      "expected": "LFS-0912",
+      "confidence": 0.0,
+      "outcome": "missed"
+    },
+    {
+      "document": "co-008-scanned.pdf",
+      "readable": false,
+      "field": "change_order_number",
+      "predicted": null,
+      "expected": "21",
+      "confidence": 0.0,
+      "outcome": "missed"
+    },
+    {
+      "document": "co-008-scanned.pdf",
+      "readable": false,
+      "field": "date",
+      "predicted": null,
+      "expected": "2025-08-27",
+      "confidence": 0.0,
+      "outcome": "missed"
+    },
+    {
+      "document": "co-008-scanned.pdf",
+      "readable": false,
+      "field": "requested_by",
+      "predicted": null,
+      "expected": null,
+      "confidence": 0.0,
+      "outcome": "correct"
+    },
+    {
+      "document": "co-008-scanned.pdf",
+      "readable": false,
+      "field": "description",
+      "predicted": null,
+      "expected": "relocate panel",
+      "confidence": 0.0,
+      "outcome": "missed"
+    },
+    {
+      "document": "co-008-scanned.pdf",
+      "readable": false,
+      "field": "amount",
+      "predicted": null,
+      "expected": 2980.0,
+      "confidence": 0.0,
+      "outcome": "missed"
+    },
+    {
+      "document": "co-008-scanned.pdf",
+      "readable": false,
+      "field": "schedule_impact_days",
+      "predicted": null,
+      "expected": 0,
+      "confidence": 0.0,
+      "outcome": "missed"
+    },
+    {
+      "document": "co-008-scanned.pdf",
+      "readable": false,
+      "field": "approval_status",
+      "predicted": null,
+      "expected": "approved",
+      "confidence": 0.0,
+      "outcome": "missed"
+    }
+  ]
+}
