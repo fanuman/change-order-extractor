@@ -115,3 +115,43 @@ def test_real_quote_that_does_not_contain_the_value() -> None:
 def test_value_inside_the_quote_ignoring_spacing_and_case() -> None:
     grounding = ground_quote("city of  RIVERSIDE", "Owner's request: City of Riverside")
     assert grounding is not None and grounding.text_in_quote
+
+
+# --- The quote supports the value, without false alarms -----------------------------------
+
+
+def test_currency_symbol_inside_the_quote_is_ignored() -> None:
+    document = "This change order:            +$9,850.00"
+    grounding = ground_quote("+9,850.00", "This change order:            +$9,850.00", document)
+    assert grounding is not None and grounding.text_in_quote
+
+
+def test_digits_are_not_matched_across_thousands_separators() -> None:
+    document = "Add: 12,500.00"
+    grounding = ground_quote("1,250", "Add: 12,500.00", document)
+    assert grounding is not None and not grounding.text_in_quote
+
+
+def test_long_value_running_past_its_quote_is_supported_by_the_document() -> None:
+    document = "Description of change:\nAdd fire-rated door assembly at stair 2,\nper RFI-044."
+    grounding = ground_quote(
+        "Add fire-rated door assembly at stair 2, per RFI-044.",
+        "Description of change:\nAdd fire-rated door assembly at stair 2,",
+        document,
+    )
+    assert grounding is not None and grounding.text_in_quote
+
+
+def test_long_value_not_in_the_document_is_not_supported() -> None:
+    document = "Description of change:\nAdd fire-rated door assembly at stair 2,\nper RFI-044."
+    grounding = ground_quote(
+        "Add fire-rated door assembly at stair 2 and stair 3.",
+        "Description of change:\nAdd fire-rated door assembly at stair 2,",
+        document,
+    )
+    assert grounding is not None and not grounding.text_in_quote
+
+
+def test_short_value_outside_its_quote_is_not_supported_even_if_it_appears_elsewhere() -> None:
+    grounding = ground_quote("7", "Project: Riverside Library Renovation")  # "7" is in DOCUMENT, but not in the quote
+    assert grounding is not None and not grounding.text_in_quote

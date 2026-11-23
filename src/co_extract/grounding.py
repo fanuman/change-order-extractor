@@ -8,9 +8,10 @@ quote it says it copied from the document. We look for that quote in the documen
   punctuation (curly quotes, dashes), which PDF extraction and LLM copying often change.
 - NOT_FOUND: not in the document, so the value has no evidence and must not be trusted.
 
-We also check that the extracted text appears inside its quote, otherwise the quote does not
-support it. start/end point at the quote in the original document text, so a reviewer can jump
-to the source.
+We also check that the quote supports the value: the quote contains the value (ignoring spacing,
+case and currency symbols), or the value is long and appears in the document itself, as a
+description that runs past its one-line quote does. start/end point at the quote in the original
+document text, so a reviewer can jump to the source.
 """
 
 from dataclasses import dataclass
@@ -30,6 +31,13 @@ PLAIN_PUNCTUATION = str.maketrans(
         0x2212: "-",  # minus sign
     }
 )
+
+
+_CURRENCY_SYMBOLS = str.maketrans("", "", "$\N{EURO SIGN}\N{POUND SIGN}")
+
+# A value at least this long, found word for word in the document, is its own evidence. Shorter values
+# such as "7" would be found almost anywhere, so they must be inside their quote.
+MIN_SELF_EVIDENT_LENGTH = 20
 
 
 class Match(StrEnum):
@@ -58,7 +66,7 @@ def ground(value: Quoted, document: str) -> Grounding | None:
     if not quote:
         return Grounding(Match.NOT_FOUND, text_in_quote=False)
 
-    text_in_quote = _normalize(value.text) in _normalize(quote)
+    text_in_quote = _supports(quote, value.text, document)
 
     start = document.find(quote)
     if start != -1:
@@ -69,6 +77,18 @@ def ground(value: Quoted, document: str) -> Grounding | None:
         return Grounding(Match.NORMALIZED, text_in_quote, *span)
 
     return Grounding(Match.NOT_FOUND, text_in_quote)
+
+
+def _supports(quote: str, text: str, document: str) -> bool:
+    """Does the quote support the value? Currency symbols are ignored, but commas and dots are not,
+    so '1,250' is not found inside '12,500'."""
+    if _comparable(text) in _comparable(quote):
+        return True
+    return len(text.strip()) >= MIN_SELF_EVIDENT_LENGTH and _find_normalized(text, document) is not None
+
+
+def _comparable(text: str) -> str:
+    return " ".join(_normalize(text).translate(_CURRENCY_SYMBOLS).split())
 
 
 def _find_normalized(quote: str, document: str) -> tuple[int, int] | None:
