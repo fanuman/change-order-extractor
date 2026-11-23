@@ -64,6 +64,20 @@ def check(result: Normalized[Any], value: Any, issue: str | None) -> None:
         # needs a person
         ("(500.00)", "Add: (500.00)", Decimal("-500.00"), "both as an increase and a decrease"),
         ("1,250.00 plus 300.00", None, Decimal("1250.00"), "more than one number"),
+        # brackets that restate a written-out amount are not a negative
+        ("($6,300.00)", "Six Thousand Three Hundred Dollars ($6,300.00)", Decimal("6300.00"), None),
+        ("($600.00)", "Deduct Six Hundred Dollars ($600.00)", Decimal("-600.00"), None),
+        # "CR" only means credit after a number, not in a change request number
+        ("$6,300.00", "CR-14 amount: $6,300.00", Decimal("6300.00"), None),
+        # form labels that name both directions are neutral
+        ("$3,200.00", "ADD/(DEDUCT): $3,200.00", Decimal("3200.00"), None),
+        ("($3,200.00)", "ADD/(DEDUCT): ($3,200.00)", Decimal("-3200.00"), None),
+        ("$3,200.00", "Increase/(Decrease) in Contract Sum: $3,200.00", Decimal("3200.00"), None),
+        # multipliers and ambiguous decimals are read but flagged
+        ("$1.2 million", None, Decimal("1200000.00"), "multiplier"),
+        ("$15k", None, Decimal("15000.00"), "multiplier"),
+        ("1,250.00 M&E", None, Decimal("1250.00"), None),
+        ("1.250 EUR", None, Decimal("1.25"), "decimal mark"),
         # unreadable
         ("see attached", None, None, "could not read an amount"),
         ("1,2345", None, None, "could not read the number"),
@@ -90,6 +104,11 @@ def test_amount(text: str, quote: str | None, value: Decimal | None, issue: str 
         ("(5) days", None, -5, None),
         ("-5 days", None, -5, None),
         ("5 days", "Reduce contract time by 5 days", -5, None),
+        # brackets that restate a written-out number are not a reduction
+        ("fourteen (14) calendar days", None, 14, None),
+        ("five (5) days", "Reduce contract time by five (5) days", -5, None),
+        # a label that names both directions is neutral
+        ("5 days", "Increase/(Decrease) in Contract Time: 5 days", 5, None),
         # converted or assumed, so flagged
         ("1 month", None, 30, "30 days per month"),
         ("10 working days", None, 10, "working days"),
@@ -171,6 +190,10 @@ APPROVED, PENDING, REJECTED = ApprovalStatus.approved, ApprovalStatus.pending, A
         ("/s/ J. Smith 3/15/2025", APPROVED, "inferred from a signature"),
         ("Owner: signed", APPROVED, "inferred from a signature"),
         ("Owner signature: ______", PENDING, "blank signature line"),
+        ("Approved by: ________", PENDING, "blank signature line"),  # the label is not the approval
+        ("Authorized Signature: ____", PENDING, "blank signature line"),
+        ("Accepted: ____", PENDING, "blank signature line"),
+        ("Approved by: /s/ J. Alvarez", APPROVED, None),
         # not one of our statuses
         ("VOID", None, "not approved, pending or rejected"),
         ("Withdrawn", None, "not approved, pending or rejected"),
@@ -198,7 +221,16 @@ def test_text_collapses_whitespace(text: str, value: str) -> None:
 
 @pytest.mark.parametrize(
     ("text", "value"),
-    [("No. 7", "7"), ("no 7", "7"), ("# C-2291", "C-2291"), ("Number: 12", "12"), ("CO-007", "CO-007")],
+    [
+        ("No. 7", "7"),
+        ("no 7", "7"),
+        ("# C-2291", "C-2291"),
+        ("Number: 12", "12"),
+        ("CO-007", "CO-007"),
+        ("NOVA-2201", "NOVA-2201"),  # "NO" inside an identifier is not a prefix
+        ("NO-1234", "NO-1234"),
+        ("Number12", "Number12"),
+    ],
 )
 def test_identifier_drops_number_prefixes(text: str, value: str) -> None:
     check(normalize_identifier(text), value, None)

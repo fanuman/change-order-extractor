@@ -34,13 +34,39 @@ def _words(*patterns: str) -> re.Pattern[str]:
     return re.compile(r"\b(?:" + "|".join(patterns) + r")\b", re.IGNORECASE)
 
 
+# Contracts often restate a written-out number in brackets: "fourteen (14) days", "Six Thousand
+# Dollars ($6,000.00)". Brackets right after such words repeat the number; they are not a negative.
+_RESTATED_IN_BRACKETS = re.compile(
+    r"\b(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen"
+    r"|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety"
+    r"|hundred|thousand|million|dollars?|cents?)\s*\(\s*[$\N{EURO SIGN}\N{POUND SIGN}]?\s*\d",
+    re.IGNORECASE,
+)
+# Form labels that name both directions, such as "ADD/(DEDUCT):" or "Increase/(Decrease)", say nothing
+# about the sign. They are removed before looking for sign words, so the number's own marks decide.
+_BOTH_DIRECTIONS_LABEL = re.compile(
+    r"\(?\b(?:add|addition|increase)\)?\s*/\s*\(?(?:deduct|deduction|decrease|credit)\b\)?"
+    r"|\(?\b(?:deduct|deduction|decrease)\)?\s*/\s*\(?(?:add|addition|increase)\b\)?",
+    re.IGNORECASE,
+)
+
+
+def _sign_context(text: str, quote: str | None) -> str:
+    """The value and its quote, without labels that name both directions."""
+    return _BOTH_DIRECTIONS_LABEL.sub(" ", f"{text} {quote or ''}")
+
+
 # --- Amount --------------------------------------------------------------------------------
 
 _CURRENCY = re.compile(r"\b(?:USD|CAD|AUD|EUR|GBP|US)\b|[$\N{EURO SIGN}\N{POUND SIGN}]", re.IGNORECASE)
 _NUMBER = re.compile(r"\d[\d,. ]*\d|\d")
 _DECIMAL_COMMA_ONLY = re.compile(r"\d+,\d{1,2}")  # '1,25': European decimal comma, no thousands mark
 _BRACKETED_NUMBER = re.compile(r"\(\s*\d[\d,. ]*\)")  # accounting style for a negative: (1,250.00)
-_DECREASE_WORDS = _words(r"deduct\w*", r"decreas\w*", r"credit\w*", r"reduc\w*", r"omi(?:t|ssion)\w*", "minus", "CR")
+_DECREASE_WORDS = _words(r"deduct\w*", r"decreas\w*", r"credit\w*", r"reduc\w*", r"omi(?:t|ssion)\w*", "minus")
+_CREDIT_SUFFIX = re.compile(r"\d\s*CR\b(?!\s*-?\s*\d)", re.IGNORECASE)  # "1,250.00 CR", not "CR-14"
+_MULTIPLIER = re.compile(r"\d\s*(?P<unit>million|thousand|mm|m|k)(?![\w&])", re.IGNORECASE)  # not "M&E"
+_MULTIPLIER_VALUES = {"million": 1_000_000, "mm": 1_000_000, "m": 1_000_000, "thousand": 1_000, "k": 1_000}
+_ONE_DOT_THREE_DECIMALS = re.compile(r"\d{1,3}\.\d{3}")  # '1.250' is 1.25 in the US and 1,250 in Europe
 _INCREASE_WORDS = _words("add", "adds", "added", "addition", "additional", r"increas\w*", "extra")
 _ZERO_AMOUNT = re.compile(r"no change|none|no cost|nil|zero", re.IGNORECASE)
 
@@ -63,9 +89,22 @@ def normalize_amount(text: str, quote: str | None = None) -> Normalized[Decimal]
         return _unreadable(f"could not read the number in amount {text!r}")
     if _DECIMAL_COMMA_ONLY.fullmatch(digits):
         issues.append(f"read the comma in amount {text!r} as a decimal mark")
+    if _ONE_DOT_THREE_DECIMALS.fullmatch(digits):
+        issues.append(
+            f"amount {text!r} could be read either way depending on the decimal mark; read the dot as a decimal mark"
+        )
+    if multiplier := _MULTIPLIER.search(cleaned):
+        number *= _MULTIPLIER_VALUES[multiplier["unit"].lower()]
+        issues.append(f"amount {text!r} uses a multiplier; read as {number:,.2f}")
 
-    marked_negative = bool(_BRACKETED_NUMBER.search(cleaned)) or cleaned.startswith("-") or cleaned.endswith("-")
-    context = f"{text} {quote or ''}"
+    context = _sign_context(text, quote)
+    bracketed = bool(_BRACKETED_NUMBER.search(cleaned)) and not _RESTATED_IN_BRACKETS.search(context)
+    marked_negative = (
+        bracketed
+        or cleaned.startswith("-")
+        or cleaned.endswith("-")
+        or any(_CREDIT_SUFFIX.search(part) for part in (cleaned, quote or ""))
+    )
     decrease = marked_negative or bool(_DECREASE_WORDS.search(context))
     increase = bool(_INCREASE_WORDS.search(context))
     if decrease and increase:
@@ -146,8 +185,9 @@ def normalize_schedule_days(text: str, quote: str | None = None) -> Normalized[i
         return _unreadable(f"schedule impact {text!r} is not a whole number of days")
     days = int(magnitude) * _DAYS_PER_UNIT[unit]
 
-    context = f"{text} {quote or ''}"
-    shorter = raw_number.startswith(("(", "-")) or bool(_SHORTER_WORDS.search(context))
+    context = _sign_context(text, quote)
+    bracketed = raw_number.startswith("(") and not _RESTATED_IN_BRACKETS.search(context)
+    shorter = bracketed or raw_number.startswith("-") or bool(_SHORTER_WORDS.search(context))
     longer = bool(_LONGER_WORDS.search(context))
     if shorter and longer:
         issues.append(f"schedule impact {text!r} is marked both as an extension and a reduction")
@@ -228,6 +268,10 @@ _PENDING = _words(
 _APPROVED = _words("approved", "accepted", "executed", r"authori[sz]ed")
 _SIGNED = re.compile(r"/s/|\bsigned\b", re.IGNORECASE)  # "signature" alone may be an empty line
 _BLANK_SIGNATURE_LINE = re.compile(r"_{3,}")
+# An approval label followed by an empty line: "Approved by: ______", "Authorized Signature: ____"
+_BLANK_APPROVAL_LINE = re.compile(
+    r"\b(?:approv\w*|accept\w*|authori[sz]\w*|signature|signed)\b[^_\n]{0,20}_{3,}", re.IGNORECASE
+)
 
 
 def normalize_status(text: str, quote: str | None = None) -> Normalized[ApprovalStatus]:
@@ -235,6 +279,10 @@ def normalize_status(text: str, quote: str | None = None) -> Normalized[Approval
     context = f"{text} {quote or ''}"
     if _NOT_A_STATUS.search(context):
         return _unreadable(f"status {text!r} is not approved, pending or rejected")
+
+    # An empty approval line is not an approval, whatever its label says, unless someone did sign.
+    if _BLANK_APPROVAL_LINE.search(context) and not _SIGNED.search(context):
+        return Normalized(ApprovalStatus.pending, (f"read a blank signature line as not yet approved ({text!r})",))
 
     without_rejections = _REJECTED.sub(" ", context)  # so "not approved" does not also count as approved
     found: list[ApprovalStatus] = []  # most cautious first
@@ -258,7 +306,7 @@ def normalize_status(text: str, quote: str | None = None) -> Normalized[Approval
 
 # --- Text ----------------------------------------------------------------------------------
 
-_IDENTIFIER_PREFIX = re.compile(r"^(?:no\.?|number|#)\s*:?\s*", re.IGNORECASE)
+_IDENTIFIER_PREFIX = re.compile(r"^(?:no\.|no\s+|number\b|#)\s*:?\s*", re.IGNORECASE)  # not the "NO" in "NOVA-2201"
 
 
 def normalize_text(text: str) -> Normalized[str]:
