@@ -33,8 +33,10 @@ class Extracted(BaseModel, Generic[T]):
         ge=0,
         le=1,
         description=(
-            "How likely the value is correct, from 0 to 1. For a null value: how likely "
-            "it is that the field really is absent from the document."
+            "How much to trust the value, from 0 to 1, computed from evidence the code checked, not from "
+            "the model's own opinion. 0.9 or more: backed by an exact quote and passed every check. "
+            "Below 0.7: a person should look (see review_reasons). For a null value: how sure we are "
+            "that the field is really absent from the document."
         ),
     )
 

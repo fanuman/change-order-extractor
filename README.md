@@ -25,7 +25,9 @@ make extract FILE=eval/documents/co-001-clean-deduct.txt
 
 On the labelled eval set: **61 of 63 fields correct, `needs_review` right on 8 of 8 documents, and every
 field scored 0.9 or higher was correct (52 of 52).** Both remaining errors are below the review threshold,
-so neither would reach anyone unflagged. Details and limits are in [Results](#results).
+so neither would reach anyone unflagged. These are in-sample numbers: 7 readable hand-written documents
+that were also used to tune the rules, so they show the pipeline behaves as designed, not how accurate it
+is on real change orders. Details, limits and an independent review are in [Results](#results).
 
 ## Quick start
 
@@ -46,9 +48,13 @@ Any OpenAI-compatible API works. Examples:
 | Provider | `LLM_BASE_URL` | `LLM_MODEL` |
 |---|---|---|
 | OpenAI | `https://api.openai.com/v1` | optional, defaults to `gpt-4o-mini` |
-| xAI | `https://api.x.ai/v1` | required |
-| Gemini | `https://generativelanguage.googleapis.com/v1beta/openai/` | required |
-| Groq | `https://api.groq.com/openai/v1` | required |
+| xAI | `https://api.x.ai/v1` | a model the provider offers |
+| Gemini | `https://generativelanguage.googleapis.com/v1beta/openai/` | a model the provider offers |
+| Groq | `https://api.groq.com/openai/v1` | a model the provider offers |
+
+Only `LLM_API_KEY` and `LLM_BASE_URL` are required. `LLM_MODEL` defaults to `gpt-4o-mini` for any base
+URL, so a gateway in front of OpenAI works as is; if the default does not exist at the provider, the
+error says to set `LLM_MODEL`. The model in use is printed to stderr on every run.
 
 Real environment variables take precedence over `.env`. stdout carries only the JSON; token usage and
 errors go to stderr. A bad document (empty, scanned, unreadable, or not a change order) still produces
@@ -69,8 +75,10 @@ if the two ever disagree.
 | `schedule_impact_days` | whole calendar days: extension positive, reduction negative, "no change" is 0 |
 | `approval_status` | `approved`, `pending` or `rejected` |
 
-A field that is not in the document is `null`, never a guess. For a null, `confidence` says how sure we
-are that the field really is absent. `needs_review` is true exactly when `review_reasons` is not empty,
+A field that is not in the document is `null`, never a guess. `confidence` is a trust score computed
+from evidence the code checked, not a probability reported by the model: 0.9 or more means the value is
+backed by an exact quote and passed every check, and below 0.7 means a person should look, with
+`review_reasons` saying why. For a null, it says how sure we are that the field really is absent. `needs_review` is true exactly when `review_reasons` is not empty,
 and every field below the review threshold (0.7) contributes at least one reason.
 
 ## Approach
@@ -92,22 +100,29 @@ ingest -> LLM extraction -> grounding -> normalization -> validation -> confiden
    item amounts, and whether the document is a change order at all. Structured output is tried first;
    if a provider rejects it or replies in a different shape, the call falls back to JSON mode with the
    schema in the prompt, validates the reply, and allows one repair. The document is wrapped in
-   `<document>` tags and treated as untrusted data.
+   `<document>` tags (any copy of those tags inside it is neutralised) and the model is told to treat
+   it as untrusted data and never follow instructions in it. That instruction is the defence against
+   prompt injection; grounding does not stop it on its own, because injected text is itself in the
+   document, so a value copied from it has a genuine quote.
 3. **Grounding** (`grounding.py`). Each quote is searched for in the document: `exact`, `normalized`
    (ignoring whitespace, case and typographic punctuation, which PDF extraction and copying often
-   change) or `not_found`. A value whose quote is not in the document is discarded. This is what makes
-   "null, never a guess" true in code rather than only in the prompt, and it is the main defence
-   against prompt injection: an injected value has no genuine quote behind it. Matches map back to
-   character offsets in the original text, so each value can link to its source.
+   change) or `not_found`. A value is discarded when its quote is not in the document, or when the
+   quote does not contain the value as a whole number or phrase (`6,300.00` is not inside
+   `16,300.00`). This is what makes "null, never a guess" true in code rather than only in the prompt.
+   Matches map back to character offsets in the original text, so each value can link to its source.
 4. **Normalization** (`normalize.py`). Pure functions turn text into typed values and report issues
    for a person to look at:
    - amounts: brackets, minus signs, `CR` and words such as *deduct* or *credit* all mean a decrease;
-     two decrease signals are still one decrease; US and European number formats;
+     two decrease signals are still one decrease; US and European number formats; `CR` counts only after
+     a number (not in `CR-14`); brackets that restate a written-out number ("Six Thousand Dollars
+     ($6,000.00)", "fourteen (14) days") are not a negative; labels that name both directions, such as
+     `ADD/(DEDUCT)`, are neutral; multipliers ("$1.2 million") and one-dot amounts ("1.250") are read
+     but flagged;
    - schedule: days, weeks, months (flagged as approximate), working days (flagged), `TBD` stays null;
    - dates: numeric, ISO and month names; an order that could be month/day or day/month is read as
      month/day and flagged;
    - status: the most cautious reading wins on mixed signals; approval inferred only from a signature is
-     flagged; a blank signature line means not yet approved.
+     flagged; a blank approval or signature line ("Approved by: ____") means not yet approved.
 5. **Validation** (`validate.py`). Ranges and cross-field rules, each a small registered function:
    the document is a change order; amount and change order number are present; the date is not in the
    future or before 1990; the amount is under 100 million; the schedule is within two years; the new
@@ -122,14 +137,13 @@ ingest -> LLM extraction -> grounding -> normalization -> validation -> confiden
    |---|---|
    | quote found exactly | starts at 0.95 |
    | quote found after normalization | starts at 0.80 |
-   | quote does not support the value | x 0.5 |
    | very short quote (under 8 characters) | x 0.85 |
    | each normalization issue | x 0.7 |
    | each validation finding on the field | x 0.4 |
    | a finding about the whole document (only for fields with a value) | x 0.4 |
    | null, and the document has no label for the field | 0.9 |
    | null, but the document has a matching label | 0.5 |
-   | a value was found but discarded or unreadable | 0.2 |
+   | a value was found but discarded (quote not in the document, or not containing the value) or unreadable | 0.2 |
 
    All weights live in one `Weights` object so they can be tuned against the eval without touching the
    logic.
@@ -197,6 +211,27 @@ What each run taught us:
   with no change in any other field. This was the only change that needed new LLM calls (7 calls, about
   9,500 tokens in total, roughly 1,350 per document on `gpt-4o-mini`).
 
+### Independent review
+
+After the eval work, a reviewer with no knowledge of how the code was built read the repo against the
+task and probed it with realistic wording. It found inputs that came out wrong at 0.95 with
+`needs_review: false`, all in the rule layer:
+
+- "fourteen (14) calendar days" read as a 14-day reduction;
+- "Six Thousand Three Hundred Dollars ($6,300.00)" and "CR-14 amount: $6,300.00" read as decreases;
+- a blank "Approved by: ____" read as approved;
+- `$6,300.00` accepted as supported by a quote of `Add $16,300.00`;
+- "NOVA-2201" shortened to "VA-2201".
+
+It also found that a `LLM_BASE_URL` for a gateway in front of OpenAI required `LLM_MODEL`, that a
+provider reply with no choices crashed the command line, and that an earlier version of this README
+described grounding as a defence against prompt injection, which it is not.
+
+Each finding was reproduced, fixed and covered by tests (the suite grew from 250 to 283), and the eval
+was replayed after each group of fixes. The eval results did not change, because none of the eight eval
+documents uses that wording. That is the main lesson of the review: the eval measures the cases we
+thought of, and a reader who did not write the code found ordinary cases we had not.
+
 ### Final calibration
 
 | Confidence | Fields | Correct | Accuracy | Mean confidence |
@@ -208,11 +243,13 @@ What each run taught us:
 
 How we read this, and why we think the scores mean something:
 
-- **High confidence is trustworthy.** Every field at 0.9 or higher was correct, and no wrong field
+- **On these documents, high confidence is trustworthy.** Every field at 0.9 or higher was correct, and no wrong field
   scored 0.7 or higher. Both remaining errors (a missed status and an invoice date) are below the
   threshold, with a reason attached.
-- **The ranking is guaranteed, not just observed.** A test checks that adding any problem never raises
-  a field's confidence, so a field with more evidence against it is never ranked above one with less.
+- **Within a field, more problems never mean more confidence.** A test checks that adding any problem
+  never raises a field's confidence. Across different kinds of evidence the scores are only as good as
+  the weights: a clean exact quote that is very short (0.81) still ranks just above a clean normalized
+  quote (0.80).
 - **Low confidence is not only "probably wrong".** The low bands are still 80% correct because several
   correct fields are rightly flagged for a problem in the *document*: an amount whose contract sums do
   not add up (the document has a typo), a schedule that says "TBD", and fields on an invoice. In this
@@ -232,6 +269,8 @@ How we read this, and why we think the scores mean something:
   tests with a fake client, not by live runs.
 - **LLM variation.** Even at temperature 0 a model can answer differently between runs. Caching keeps
   code comparisons clean; the prompt v2 comparison is a single fresh run.
+- **Review fixes are covered by tests, not yet by the eval.** The wording found in the independent review
+  is in the unit tests; adding eval documents that use it is the next step.
 
 ## Failure modes
 
@@ -240,7 +279,6 @@ Handled, with tests:
 | Failure | What happens |
 |---|---|
 | The model invents a value | its quote is not in the document, so the value is discarded and flagged |
-| Prompt injection in the document | no genuine quote for the injected values; the document is wrapped and marked untrusted (`co-005`) |
 | New contract sum taken as the amount | contract sum check fails and names the problem |
 | Sign of the amount reversed | contract sum check says "the sign of the amount looks reversed" |
 | Ambiguous date such as 03/04/2025 | read as month/day and flagged |
@@ -250,13 +288,19 @@ Handled, with tests:
 | Empty, scanned or broken PDF | all fields null at confidence 0, one reason, no LLM call (`co-008`) |
 | Provider without structured output | falls back to JSON mode with one repair attempt |
 | Model only accepts its default temperature | retried once without temperature |
-| LLM call fails (network, key, unknown model) | all fields null with a reason that says what to check |
+| LLM call fails (network, key, unknown model) or returns no message | all fields null with a reason that says what to check |
+| A value inside a longer number (`6,300.00` quoted from `16,300.00`) | not accepted as supported; value discarded and flagged |
+| Brackets restating a written number ("fourteen (14) days", "Dollars ($6,300.00)") | read as positive |
+| `CR` in an identifier (`CR-14`), or a label such as `ADD/(DEDUCT)` | not read as a decrease |
+| Blank approval line ("Approved by: ____") | read as pending and flagged |
+| Multipliers ("$1.2 million") and one-dot amounts ("1.250") | read and flagged |
 
 Known gaps, not handled:
 
 | Gap | Effect | What we would do next |
 |---|---|---|
 | No OCR | scanned change orders are flagged but not read | add an OCR step (for example Tesseract) before extraction |
+| Prompt injection | defended by the prompt only: the document is wrapped and the model told to ignore instructions in it (`co-005` resisted). A model that did follow an injected note would produce values with genuine quotes | flag quotes taken from instruction-like text, and keep the cross-field checks |
 | Partly signed approvals | `co-004`: contractor signed, owner line blank; the model returned no status (flagged at 0.5, truth is pending) | extract each signature line as context and decide the status in code |
 | Several change orders in one file | only one is extracted | split by change order headings first |
 | Currency is not extracted | amounts in different currencies look alike | add a currency field |
@@ -271,7 +315,7 @@ Known gaps, not handled:
 make check
 ```
 
-Runs ruff (lint and format), mypy in strict mode, 250 pytest tests and the schema drift check. No test
+Runs ruff (lint and format), mypy in strict mode, 283 pytest tests and the schema drift check. No test
 calls the network: the LLM is replaced by a fake client. The tests cover each normalization rule as a
 table of messy inputs, every validation rule and its edges, every confidence situation and the "a
 problem never raises confidence" property, the LLM fallback and error paths using the SDK's real error

@@ -10,6 +10,7 @@ assembled from those. Print SYSTEM_PROMPT to see exactly what the model receives
 """
 
 import json
+import re
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -132,7 +133,11 @@ def repair_message(errors: str) -> str:
     return f"That reply does not match the schema:\n{errors}\nReply again with the corrected JSON object only."
 
 
+# Our own tags, in any letter case or spacing: <document>, </DOCUMENT>, < / document >
+_DOCUMENT_TAG = re.compile(r"<\s*/?\s*document\s*>", re.IGNORECASE)
+
+
 def user_message(document_text: str) -> str:
-    """Wrap the document so its content can't close our tags early."""
-    safe = document_text.replace("</document>", "</ document>")
+    """Wrap the document so text inside it can't open or close our tags."""
+    safe = _DOCUMENT_TAG.sub("[document tag]", document_text)
     return f"<document>\n{safe}\n</document>"

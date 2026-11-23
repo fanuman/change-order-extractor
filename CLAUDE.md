@@ -32,7 +32,7 @@ make test                  # tests only (no network, no API key needed)
 make extract FILE=<path>   # one document -> JSON on stdout
 make outputs               # re-run extraction on samples/ and write outputs/
 make schema                # regenerate schema/change_order.schema.json
-make eval                  # accuracy and confidence calibration on eval/ (calls the LLM, costs money)
+make eval                  # accuracy and calibration on eval/ (replays cached LLM replies; calls the LLM on a cache miss)
 ```
 
 The Makefile sets `PYTHONPATH=src`. Without make: `PYTHONPATH=src python -m co_extract <path>`.
@@ -57,8 +57,9 @@ ingest -> LLM extraction -> grounding -> normalisation -> validation -> confiden
 
 - **LLM extraction** returns, for each field, the raw text and the exact quote it came from.
   The LLM does not convert, compute or judge validity.
-- **Grounding** checks each quote really appears in the document text (whitespace-insensitive).
-  A value whose quote is not found is treated as not extracted.
+- **Grounding** checks each quote really appears in the document text (whitespace-insensitive)
+  and contains the value as a whole number or phrase. A value whose quote is not found, or whose
+  quote does not contain it, is treated as not extracted.
 - **Normalisation** (code) turns raw text into typed values: dates, signed amounts, day counts.
 - **Validation** (code) checks ranges and cross-field rules, for example the sign of `amount`
   agrees with words like "deduct", and line items sum to the total when both are present.
@@ -93,16 +94,16 @@ src/co_extract/   models, ingest, llm, prompts, grounding, normalize, validate, 
 schema/           generated JSON Schema
 samples/          input documents
 outputs/          committed JSON results for samples/
-eval/             labelled eval documents, ground truth, eval script, results
-tests/            pytest tests and fixtures
-docs/             review checklist
+eval/             labelled eval documents, ground truth, eval script, cached LLM replies, results
+tests/            pytest tests
+scripts/          schema export
 ```
 
 ## Workflow
 
 - Explain a change and show the exact lines before writing it. One file at a time.
 - The developer runs the commands and reads every diff before committing.
-- Before committing, a reviewer with fresh context checks the diff against
-  `docs/review-checklist.md`. Verify review findings; don't apply them blindly.
+- For larger changes, a reviewer with fresh context reviews the code against this file and the
+  task. Verify every finding by reproducing it; don't apply findings blindly.
 - A change to prompts or extraction logic is accepted only if `make eval` holds or improves.
 - Commit messages: plain and multi-line, no co-author or session trailers, no heredocs.
