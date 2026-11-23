@@ -1,0 +1,9 @@
+INVOICE  #INV-77812
+Bill to: Riverside Builders Inc.
+Date: 05/30/2025
+
+Item: Rental - 40 ft boom lift, 2 weeks        $3,150.00
+Tax                                              $252.00
+Total due                                      $3,402.00
+
+Payment terms: Net 30

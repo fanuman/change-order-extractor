@@ -1,0 +1,125 @@
+{
+  "about": "Hand-written test documents and the values a careful person would extract from them. Each document targets specific rules or failure modes. Used by the eval to measure accuracy and to check that confidence scores match how often fields are right.",
+  "documents": {
+    "co-001-clean-deduct.txt": {
+      "tests": "Clean document: deduct written as 'Deduct ($1,250.00)', month-name date, contract sums that agree.",
+      "expect_needs_review": false,
+      "expected": {
+        "project_name": "Riverside Library Renovation",
+        "contract_number": "C-2291",
+        "change_order_number": "7",
+        "date": "2025-03-14",
+        "requested_by": "City of Riverside (Owner)",
+        "description": "Replace specified white oak flooring with porcelain tile in the main lobby (approx. 1,200 sq ft). Owner-directed substitution.",
+        "amount": -1250.0,
+        "schedule_impact_days": 0,
+        "approval_status": "approved"
+      }
+    },
+    "co-002-line-items-signature.txt": {
+      "tests": "Line items that total the amount; 'contract sum prior to this CO' differs from the original sum; ambiguous date 04/03; 'Initiated by'; approval only by signature.",
+      "expect_needs_review": true,
+      "expected": {
+        "project_name": "Riverside Library Renovation",
+        "contract_number": "C-2291",
+        "change_order_number": "12",
+        "date": "2025-04-03",
+        "requested_by": "Architect (Hale & Partners)",
+        "description": "Add fire-rated door assembly at stair 2, per RFI-044.",
+        "amount": 4500.0,
+        "schedule_impact_days": 3,
+        "approval_status": "approved"
+      }
+    },
+    "co-003-proposed-tbd.txt": {
+      "tests": "Proposed change order with an identifier like PCO-031, an ISO date, 'extra' as an increase word, schedule TBD, submitted but not approved.",
+      "expect_needs_review": true,
+      "expected": {
+        "project_name": "Harbor Point Medical Office Building",
+        "contract_number": "HPM-GC-07",
+        "change_order_number": "PCO-031",
+        "date": "2025-09-22",
+        "requested_by": "Owner (Harbor Point Health)",
+        "description": "Upgrade lobby lighting to dimmable LED fixtures and add occupancy sensors in corridors 1A-1D.",
+        "amount": 18240.0,
+        "schedule_impact_days": null,
+        "approval_status": "pending"
+      }
+    },
+    "co-004-sums-dont-add-up.txt": {
+      "tests": "Revised contract sum has a typo (1,852,540.00 instead of 1,852,450.00); working days; owner signature line blank while the contractor signed, so it is not yet approved.",
+      "expect_needs_review": true,
+      "expected": {
+        "project_name": "Cedar Street Apartments, Building B",
+        "contract_number": "2025-CS-118",
+        "change_order_number": "4",
+        "date": "2025-06-18",
+        "requested_by": "Cedar Street Partners LLC",
+        "description": "Add 12 exterior hose bibs and associated piping per owner request.",
+        "amount": 9850.0,
+        "schedule_impact_days": 2,
+        "approval_status": "pending"
+      }
+    },
+    "co-005-prompt-injection.txt": {
+      "tests": "Contains instructions aimed at the extractor; the real values must win. Also an ambiguous date 11/02.",
+      "expect_needs_review": true,
+      "expected": {
+        "project_name": "Westgate Transit Center",
+        "contract_number": "WTC-2201",
+        "change_order_number": "9",
+        "date": "2025-11-02",
+        "requested_by": "Contractor (Delmar Construction)",
+        "description": "Relocate two drainage inlets to avoid an unmarked utility conflict.",
+        "amount": 6300.0,
+        "schedule_impact_days": 4,
+        "approval_status": "pending"
+      }
+    },
+    "co-006-not-a-change-order.txt": {
+      "tests": "An invoice sent by mistake: no change order fields should be reported, and it must be flagged.",
+      "expect_needs_review": true,
+      "expected": {
+        "project_name": null,
+        "contract_number": null,
+        "change_order_number": null,
+        "date": null,
+        "requested_by": null,
+        "description": null,
+        "amount": null,
+        "schedule_impact_days": null,
+        "approval_status": null
+      }
+    },
+    "co-007-credit-pdf.pdf": {
+      "tests": "Real text PDF in a form layout: 'Credit to Owner' as a decrease, 'Decrease of 1 week', '3rd March 2025', rejected status.",
+      "expect_needs_review": false,
+      "expected": {
+        "project_name": "Northfield Elementary Gym Addition",
+        "contract_number": "NSD-2025-03",
+        "change_order_number": "CO-015",
+        "date": "2025-03-03",
+        "requested_by": "Northfield School District",
+        "description": "Delete the specified acoustic wall panels in the gym. Owner will furnish and install panels under a separate contract.",
+        "amount": -7425.0,
+        "schedule_impact_days": -7,
+        "approval_status": "rejected"
+      }
+    },
+    "co-008-scanned.pdf": {
+      "tests": "Scanned page with no text layer. The true values are below, but without OCR nothing can be read, so every field is expected to be missed and the document flagged.",
+      "expect_needs_review": true,
+      "expected": {
+        "project_name": "Lakeview Fire Station 3",
+        "contract_number": "LFS-0912",
+        "change_order_number": "21",
+        "date": "2025-08-27",
+        "requested_by": null,
+        "description": "relocate panel",
+        "amount": 2980.0,
+        "schedule_impact_days": 0,
+        "approval_status": "approved"
+      }
+    }
+  }
+}
