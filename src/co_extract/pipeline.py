@@ -131,7 +131,9 @@ class ChangeOrderPipeline:
         self, fields: dict[str, FieldResult], findings: list[Finding], document_text: str
     ) -> dict[str, float]:
         """Confidence for each field, from its grounding, issues and validation findings."""
-        document_findings = _messages_for(None, findings)  # a problem with the whole document lowers every field
+        # A problem with the whole document lowers trust in every value read from it. Saying a field is
+        # absent from such a document is still sound, so nulls are not penalised.
+        document_findings = _messages_for(None, findings)
         return {
             name: field_confidence(
                 FieldEvidence(
@@ -139,7 +141,10 @@ class ChangeOrderPipeline:
                     has_value=result.value is not None,
                     quote=result.quoted.quote,
                     normalization_issues=tuple(result.issues),
-                    validation_findings=(*_messages_for(name, findings), *document_findings),
+                    validation_findings=(
+                        *_messages_for(name, findings),
+                        *(document_findings if result.value is not None else ()),
+                    ),
                     mentioned_in_document=is_mentioned(name, document_text),
                 )
             )

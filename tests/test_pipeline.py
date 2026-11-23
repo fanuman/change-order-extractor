@@ -149,10 +149,15 @@ def test_invented_quote_is_discarded() -> None:
     assert_reasons_explain_review(output)
 
 
-def test_not_a_change_order_lowers_every_field() -> None:
-    output = run(with_changes(is_change_order=False))
+def test_not_a_change_order_lowers_every_value_but_not_the_nulls() -> None:
+    reply = with_changes(is_change_order=False, project_name=NULL)
+    output = run(reply)
     assert "the document does not look like a construction change order" in output["review_reasons"]
-    assert all(output[name]["confidence"] < WEIGHTS.review_threshold for name in FIELDS)
+    with_values = [name for name in FIELDS if output[name]["value"] is not None]
+    assert len(with_values) == 8
+    assert all(output[name]["confidence"] < WEIGHTS.review_threshold for name in with_values)
+    # "absent" is still a sound claim about such a document, so the null keeps its usual confidence
+    assert output["project_name"] == run(with_changes(project_name=NULL))["project_name"]
     assert_reasons_explain_review(output)
 
 
