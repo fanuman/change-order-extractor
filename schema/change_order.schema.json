@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "ApprovalStatus": {
+      "enum": [
+        "approved",
+        "pending",
+        "rejected"
+      ],
+      "title": "ApprovalStatus",
+      "type": "string"
+    },
+    "Extracted_ApprovalStatus_": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ApprovalStatus"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The value as found in the document, normalised. Null if the document does not contain it."
+        },
+        "confidence": {
+          "description": "How likely the value is correct, from 0 to 1. For a null value: how likely it is that the field really is absent from the document.",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "confidence"
+      ],
+      "title": "Extracted[ApprovalStatus]",
+      "type": "object"
+    },
+    "Extracted_date_": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The value as found in the document, normalised. Null if the document does not contain it.",
+          "title": "Value"
+        },
+        "confidence": {
+          "description": "How likely the value is correct, from 0 to 1. For a null value: how likely it is that the field really is absent from the document.",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "confidence"
+      ],
+      "title": "Extracted[date]",
+      "type": "object"
+    },
+    "Extracted_float_": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The value as found in the document, normalised. Null if the document does not contain it.",
+          "title": "Value"
+        },
+        "confidence": {
+          "description": "How likely the value is correct, from 0 to 1. For a null value: how likely it is that the field really is absent from the document.",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "confidence"
+      ],
+      "title": "Extracted[float]",
+      "type": "object"
+    },
+    "Extracted_int_": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The value as found in the document, normalised. Null if the document does not contain it.",
+          "title": "Value"
+        },
+        "confidence": {
+          "description": "How likely the value is correct, from 0 to 1. For a null value: how likely it is that the field really is absent from the document.",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "confidence"
+      ],
+      "title": "Extracted[int]",
+      "type": "object"
+    },
+    "Extracted_str_": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The value as found in the document, normalised. Null if the document does not contain it.",
+          "title": "Value"
+        },
+        "confidence": {
+          "description": "How likely the value is correct, from 0 to 1. For a null value: how likely it is that the field really is absent from the document.",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "confidence"
+      ],
+      "title": "Extracted[str]",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One change order, extracted and checked.",
+  "properties": {
+    "project_name": {
+      "$ref": "#/$defs/Extracted_str_"
+    },
+    "contract_number": {
+      "$ref": "#/$defs/Extracted_str_"
+    },
+    "change_order_number": {
+      "$ref": "#/$defs/Extracted_str_"
+    },
+    "date": {
+      "$ref": "#/$defs/Extracted_date_",
+      "description": "Date of the change order, ISO 8601 (YYYY-MM-DD)."
+    },
+    "requested_by": {
+      "$ref": "#/$defs/Extracted_str_"
+    },
+    "description": {
+      "$ref": "#/$defs/Extracted_str_"
+    },
+    "amount": {
+      "$ref": "#/$defs/Extracted_float_",
+      "description": "Change to the contract price in the document's currency: increase positive, decrease negative."
+    },
+    "schedule_impact_days": {
+      "$ref": "#/$defs/Extracted_int_",
+      "description": "Change to the contract time in calendar days: extension positive, reduction negative, 0 for no change."
+    },
+    "approval_status": {
+      "$ref": "#/$defs/Extracted_ApprovalStatus_"
+    },
+    "needs_review": {
+      "description": "True when any check failed or any field's confidence is below the review threshold.",
+      "title": "Needs Review",
+      "type": "boolean"
+    },
+    "review_reasons": {
+      "description": "Plain-language reasons why needs_review is true. Empty when it is false.",
+      "items": {
+        "type": "string"
+      },
+      "title": "Review Reasons",
+      "type": "array"
+    }
+  },
+  "required": [
+    "project_name",
+    "contract_number",
+    "change_order_number",
+    "date",
+    "requested_by",
+    "description",
+    "amount",
+    "schedule_impact_days",
+    "approval_status",
+    "needs_review",
+    "review_reasons"
+  ],
+  "title": "ChangeOrderExtraction",
+  "type": "object"
+}

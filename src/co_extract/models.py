@@ -42,7 +42,7 @@ class Extracted(BaseModel, Generic[T]):
 class ChangeOrderExtraction(BaseModel):
     """One change order, extracted and checked."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", json_schema_serialization_defaults_required=True)
 
     project_name: Extracted[str]
     contract_number: Extracted[str]
