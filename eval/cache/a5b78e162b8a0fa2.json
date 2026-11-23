@@ -1,0 +1,50 @@
+{
+  "project_name": {
+    "text": "Riverside Library Renovation",
+    "quote": "Project: Riverside Library Renovation"
+  },
+  "contract_number": {
+    "text": "C-2291",
+    "quote": "Contract No.: C-2291"
+  },
+  "change_order_number": {
+    "text": "7",
+    "quote": "Change Order No.: 7"
+  },
+  "date": {
+    "text": "March 14, 2025",
+    "quote": "Date: March 14, 2025"
+  },
+  "requested_by": {
+    "text": "City of Riverside (Owner)",
+    "quote": "Requested by: City of Riverside (Owner)"
+  },
+  "description": {
+    "text": "Replace specified white oak flooring with porcelain tile in the main lobby (approx. 1,200 sq ft). Owner-directed substitution.",
+    "quote": "Description:\nReplace specified white oak flooring with porcelain tile in the main lobby"
+  },
+  "amount": {
+    "text": "Deduct  ($1,250.00)",
+    "quote": "Change in Contract Sum:     Deduct  ($1,250.00)"
+  },
+  "schedule_impact": {
+    "text": "No change",
+    "quote": "Change in Contract Time:    No change"
+  },
+  "approval_status": {
+    "text": "APPROVED",
+    "quote": "Status: APPROVED"
+  },
+  "context": {
+    "is_change_order": true,
+    "contract_sum_before": {
+      "text": "$250,000.00",
+      "quote": "Original Contract Sum:              $250,000.00"
+    },
+    "contract_sum_after": {
+      "text": "$248,750.00",
+      "quote": "New Contract Sum:                   $248,750.00"
+    },
+    "line_item_amounts": []
+  }
+}

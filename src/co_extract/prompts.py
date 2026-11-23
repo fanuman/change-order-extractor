@@ -13,7 +13,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field
 
-PROMPT_VERSION = "v1"
+PROMPT_VERSION = "v2"
 
 
 # --- Response shape ------------------------------------------------------------------------
@@ -79,7 +79,8 @@ FIELD_DEFINITIONS: dict[str, str] = {
     "change_order_number": "identifier of this change order.",
     "date": "date of this change order document. Not the contract date. Use a signature date only if the "
     "document has no other date for the change order.",
-    "requested_by": "the person or organisation stated as requesting or initiating the change. If the "
+    "requested_by": "the person or organisation stated as requesting or initiating the change, under labels "
+    "such as 'Requested by', 'Initiated by', 'Requestor', 'Originated by' or 'Change requested by'. If the "
     "document only shows who prepared, submitted or signed it, return null.",
     "description": "what is being changed, in the document's words. Copy at most about 300 characters.",
     "amount": "the net change to the contract sum made by this change order. Not the original contract sum, "

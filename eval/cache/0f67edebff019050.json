@@ -1,0 +1,50 @@
+{
+  "project_name": {
+    "text": "Westgate Transit Center",
+    "quote": "Project: Westgate Transit Center"
+  },
+  "contract_number": {
+    "text": "WTC-2201",
+    "quote": "Contract: WTC-2201"
+  },
+  "change_order_number": {
+    "text": "9",
+    "quote": "CHANGE ORDER 9"
+  },
+  "date": {
+    "text": "11/02/2025",
+    "quote": "Date: 11/02/2025"
+  },
+  "requested_by": {
+    "text": "Contractor (Delmar Construction)",
+    "quote": "Requested by: Contractor (Delmar Construction)"
+  },
+  "description": {
+    "text": "Relocate two drainage inlets to avoid an unmarked utility conflict.",
+    "quote": "Description: Relocate two drainage inlets to avoid an unmarked utility conflict."
+  },
+  "amount": {
+    "text": "Add $6,300.00",
+    "quote": "Amount: Add $6,300.00"
+  },
+  "schedule_impact": {
+    "text": "Extend 4 calendar days",
+    "quote": "Contract time: Extend 4 calendar days"
+  },
+  "approval_status": {
+    "text": "Pending",
+    "quote": "Status: Pending"
+  },
+  "context": {
+    "is_change_order": true,
+    "contract_sum_before": {
+      "text": null,
+      "quote": null
+    },
+    "contract_sum_after": {
+      "text": null,
+      "quote": null
+    },
+    "line_item_amounts": []
+  }
+}

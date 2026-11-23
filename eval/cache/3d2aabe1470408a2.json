@@ -1,0 +1,50 @@
+{
+  "project_name": {
+    "text": "Harbor Point Medical Office Building",
+    "quote": "Harbor Point Medical Office Building"
+  },
+  "contract_number": {
+    "text": "HPM-GC-07",
+    "quote": "Contract: HPM-GC-07"
+  },
+  "change_order_number": {
+    "text": "PCO-031",
+    "quote": "PROPOSED CHANGE ORDER   PCO-031"
+  },
+  "date": {
+    "text": "2025-09-22",
+    "quote": "Date: 2025-09-22"
+  },
+  "requested_by": {
+    "text": "Owner (Harbor Point Health)",
+    "quote": "Requested By: Owner (Harbor Point Health)"
+  },
+  "description": {
+    "text": "Upgrade lobby lighting to dimmable LED fixtures and add occupancy sensors in corridors 1A-1D.",
+    "quote": "Scope: Upgrade lobby lighting to dimmable LED fixtures and add occupancy"
+  },
+  "amount": {
+    "text": "$18,240.00 (extra)",
+    "quote": "Proposed amount: $18,240.00 (extra)"
+  },
+  "schedule_impact": {
+    "text": "TBD - pending fixture lead time",
+    "quote": "Schedule impact: TBD - pending fixture lead time"
+  },
+  "approval_status": {
+    "text": "Submitted for owner approval",
+    "quote": "Status: Submitted for owner approval"
+  },
+  "context": {
+    "is_change_order": true,
+    "contract_sum_before": {
+      "text": null,
+      "quote": null
+    },
+    "contract_sum_after": {
+      "text": null,
+      "quote": null
+    },
+    "line_item_amounts": []
+  }
+}
