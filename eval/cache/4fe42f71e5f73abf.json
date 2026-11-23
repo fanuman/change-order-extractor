@@ -1,0 +1,50 @@
+{
+  "project_name": {
+    "text": "Cedar Street Apartments, Building B",
+    "quote": "Project: Cedar Street Apartments, Building B"
+  },
+  "contract_number": {
+    "text": "2025-CS-118",
+    "quote": "Contract Number: 2025-CS-118"
+  },
+  "change_order_number": {
+    "text": "4",
+    "quote": "CHANGE ORDER NO. 4"
+  },
+  "date": {
+    "text": "06/18/2025",
+    "quote": "Date: 06/18/2025"
+  },
+  "requested_by": {
+    "text": "Cedar Street Partners LLC",
+    "quote": "Requested by: Cedar Street Partners LLC"
+  },
+  "description": {
+    "text": "Add 12 exterior hose bibs and associated piping per owner request.",
+    "quote": "Description: Add 12 exterior hose bibs and associated piping per owner request."
+  },
+  "amount": {
+    "text": "+9,850.00",
+    "quote": "This change order:            +$9,850.00"
+  },
+  "schedule_impact": {
+    "text": "+2 working days",
+    "quote": "Contract time: +2 working days"
+  },
+  "approval_status": {
+    "text": null,
+    "quote": null
+  },
+  "context": {
+    "is_change_order": true,
+    "contract_sum_before": {
+      "text": "$1,842,600.00",
+      "quote": "Previous contract sum:      $1,842,600.00"
+    },
+    "contract_sum_after": {
+      "text": "$1,852,540.00",
+      "quote": "Revised contract sum:       $1,852,540.00"
+    },
+    "line_item_amounts": []
+  }
+}

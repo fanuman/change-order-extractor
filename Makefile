@@ -13,7 +13,8 @@ help:
 	@echo "make extract FILE=<path>   extract one document, JSON on stdout"
 	@echo "make outputs               extract every file in samples/ into outputs/"
 	@echo "make schema                regenerate schema/change_order.schema.json"
-	@echo "make eval                  accuracy and calibration on eval/ (calls the LLM)"
+	@echo "make eval                  accuracy and calibration on eval/ (cached LLM replies)"
+	@echo "                           ARGS=\"--save NAME\" saves results, ARGS=\"--refresh\" calls the LLM again"
 
 check: lint format-check typecheck test schema-check
 
@@ -51,4 +52,4 @@ outputs:
 	done
 
 eval:
-	$(PYTHON) eval/run_eval.py
+	$(PYTHON) eval/run_eval.py $(ARGS)

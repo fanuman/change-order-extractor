@@ -1,0 +1,50 @@
+{
+  "project_name": {
+    "text": null,
+    "quote": null
+  },
+  "contract_number": {
+    "text": null,
+    "quote": null
+  },
+  "change_order_number": {
+    "text": null,
+    "quote": null
+  },
+  "date": {
+    "text": "05/30/2025",
+    "quote": "Date: 05/30/2025"
+  },
+  "requested_by": {
+    "text": null,
+    "quote": null
+  },
+  "description": {
+    "text": null,
+    "quote": null
+  },
+  "amount": {
+    "text": null,
+    "quote": null
+  },
+  "schedule_impact": {
+    "text": null,
+    "quote": null
+  },
+  "approval_status": {
+    "text": null,
+    "quote": null
+  },
+  "context": {
+    "is_change_order": false,
+    "contract_sum_before": {
+      "text": null,
+      "quote": null
+    },
+    "contract_sum_after": {
+      "text": null,
+      "quote": null
+    },
+    "line_item_amounts": []
+  }
+}

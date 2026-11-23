@@ -1,0 +1,50 @@
+{
+  "project_name": {
+    "text": "Northfield Elementary Gym Addition",
+    "quote": "Project: Northfield Elementary Gym Addition"
+  },
+  "contract_number": {
+    "text": "NSD-2025-03",
+    "quote": "Contract No.: NSD-2025-03"
+  },
+  "change_order_number": {
+    "text": "CO-015",
+    "quote": "Change Order Request No. CO-015"
+  },
+  "date": {
+    "text": "3rd March 2025",
+    "quote": "Date: 3rd March 2025"
+  },
+  "requested_by": {
+    "text": "Northfield School District",
+    "quote": "Requested by: Northfield School District"
+  },
+  "description": {
+    "text": "Delete the specified acoustic wall panels in the gym. Owner will furnish and install panels under a separate contract.",
+    "quote": "Description\nDelete the specified acoustic wall panels in the gym. Owner will furnish and install panels under a separate contract."
+  },
+  "amount": {
+    "text": "Credit to Owner: 7,425.00",
+    "quote": "Credit to Owner: 7,425.00"
+  },
+  "schedule_impact": {
+    "text": "Decrease of 1 week",
+    "quote": "Contract Time: Decrease of 1 week"
+  },
+  "approval_status": {
+    "text": "REJECTED by Architect - resubmit with itemized credit",
+    "quote": "Status: REJECTED by Architect - resubmit with itemized credit"
+  },
+  "context": {
+    "is_change_order": true,
+    "contract_sum_before": {
+      "text": null,
+      "quote": null
+    },
+    "contract_sum_after": {
+      "text": null,
+      "quote": null
+    },
+    "line_item_amounts": []
+  }
+}
