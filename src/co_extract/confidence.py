@@ -4,14 +4,14 @@ We never ask the LLM how sure it is: self-reported confidence is poorly matched 
 Instead each field starts from how well its quote was grounded in the document, and loses
 confidence for every problem the later steps found:
 
-    exact quote          0.95      quote does not contain the value   x 0.5
-    normalised quote     0.80      very short quote                   x 0.85
-                                   each normalisation issue           x 0.7
+    exact quote          0.95      very short quote                   x 0.85
+    normalised quote     0.80      each normalisation issue           x 0.7
                                    each validation finding            x 0.4
 
 A null field's confidence says how sure we are that the field is really absent: high when the
 document never mentions it, lower when it has a matching label but the LLM found nothing, and
-low when a value was found but had to be thrown away (quote not in the document, unreadable).
+low when a value was found but had to be thrown away (quote not in the document, quote that does
+not contain the value, or text that could not be read).
 
 These weights are a starting point. The eval measures how often fields at each confidence
 level are actually correct, and the weights are tuned until the two agree (calibration).
@@ -27,7 +27,6 @@ from co_extract.grounding import Grounding, Match
 class Weights:
     exact_quote: float = 0.95
     normalized_quote: float = 0.80
-    quote_lacks_value: float = 0.5
     short_quote: float = 0.85
     per_normalization_issue: float = 0.7
     per_validation_finding: float = 0.4
@@ -57,12 +56,10 @@ def field_confidence(evidence: FieldEvidence, weights: Weights = WEIGHTS) -> flo
     """A score from 0 to 1, rounded to two decimals."""
     if evidence.grounding is None:
         score = weights.absent_but_mentioned if evidence.mentioned_in_document else weights.absent_and_not_mentioned
-    elif not evidence.grounding.found or not evidence.has_value:
+    elif not evidence.grounding.found or not evidence.grounding.text_in_quote or not evidence.has_value:
         score = weights.value_discarded
     else:
         score = weights.exact_quote if evidence.grounding.match is Match.EXACT else weights.normalized_quote
-        if not evidence.grounding.text_in_quote:
-            score *= weights.quote_lacks_value
         if len((evidence.quote or "").strip()) < weights.short_quote_length:
             score *= weights.short_quote
         score *= weights.per_normalization_issue ** len(evidence.normalization_issues)

@@ -25,7 +25,7 @@ CLEAN_EXACT = FieldEvidence(EXACT, has_value=True, quote=QUOTE)
         (replace(CLEAN_EXACT, normalization_issues=("ambiguous date",)), 0.66),
         (replace(CLEAN_EXACT, normalization_issues=("one", "two")), 0.47),
         (replace(CLEAN_EXACT, validation_findings=("sums don't add up",)), 0.38),
-        (replace(CLEAN_EXACT, grounding=replace(EXACT, text_in_quote=False)), 0.47),
+        (replace(CLEAN_EXACT, grounding=replace(EXACT, text_in_quote=False)), 0.20),
         (replace(CLEAN_EXACT, quote="No. 7"), 0.81),
         (FieldEvidence(NOT_FOUND, has_value=True, quote="invented"), 0.20),
         (FieldEvidence(EXACT, has_value=False, quote="Date: soon"), 0.20),

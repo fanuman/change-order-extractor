@@ -14,6 +14,7 @@ description that runs past its one-line quote does. start/end point at the quote
 document text, so a reviewer can jump to the source.
 """
 
+import re
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -82,9 +83,17 @@ def ground(value: Quoted, document: str) -> Grounding | None:
 def _supports(quote: str, text: str, document: str) -> bool:
     """Does the quote support the value? Currency symbols are ignored, but commas and dots are not,
     so '1,250' is not found inside '12,500'."""
-    if _comparable(text) in _comparable(quote):
+    if _contains_as_whole_value(_comparable(quote), _comparable(text)):
         return True
     return len(text.strip()) >= MIN_SELF_EVIDENT_LENGTH and _find_normalized(text, document) is not None
+
+
+def _contains_as_whole_value(haystack: str, value: str) -> bool:
+    """Find the value without it being part of a longer number: '6,300.00' is not inside '16,300.00',
+    '300.00' is not inside '6,300.00', '7' is not inside 'No. 17' and '1,250' is not inside '1,250,000'.
+    A value may still be followed by cents: '1,250' is inside '1,250.00'."""
+    pattern = rf"(?<!\d)(?<!\d[.,]){re.escape(value)}(?!\d)(?![.,]\d{{3}})"
+    return re.search(pattern, haystack) is not None
 
 
 def _comparable(text: str) -> str:

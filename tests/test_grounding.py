@@ -155,3 +155,20 @@ def test_long_value_not_in_the_document_is_not_supported() -> None:
 def test_short_value_outside_its_quote_is_not_supported_even_if_it_appears_elsewhere() -> None:
     grounding = ground_quote("7", "Project: Riverside Library Renovation")  # "7" is in DOCUMENT, but not in the quote
     assert grounding is not None and not grounding.text_in_quote
+
+
+@pytest.mark.parametrize(
+    ("value", "quote", "supported"),
+    [
+        ("$6,300.00", "Add $16,300.00", False),  # a value is not part of a longer number
+        ("300.00", "Add $6,300.00", False),
+        ("7", "CHANGE ORDER No. 17", False),
+        ("1,250", "Total 1,250,000.00", False),
+        ("1,250", "Deduct 1,250.00", True),  # cents may follow
+        ("7", "CHANGE ORDER No.7", True),  # letters and a dot before the number are fine
+        ("$6,300.00", "Add $6,300.00 per RFI", True),
+    ],
+)
+def test_numbers_are_matched_as_whole_values(value: str, quote: str, supported: bool) -> None:
+    grounding = ground_quote(value, quote, document=quote)
+    assert grounding is not None and grounding.text_in_quote is supported

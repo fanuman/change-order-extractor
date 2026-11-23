@@ -67,7 +67,13 @@ class FieldResult:
 
     @property
     def is_grounded(self) -> bool:
-        return self.grounding is not None and self.grounding.found and self.quoted.text is not None
+        """The quote is in the document and supports the value. Anything else is treated as a guess."""
+        return (
+            self.grounding is not None
+            and self.grounding.found
+            and self.grounding.text_in_quote
+            and self.quoted.text is not None
+        )
 
 
 class ChangeOrderPipeline:
@@ -198,7 +204,7 @@ def _field_reasons(
     if grounding is not None and not grounding.found:
         reasons.append(f"{name}: quote {result.quoted.quote!r} is not in the document; value discarded")
     elif grounding is not None and not grounding.text_in_quote:
-        reasons.append(f"{name}: the quote {result.quoted.quote!r} does not contain the value")
+        reasons.append(f"{name}: the quote {result.quoted.quote!r} does not contain the value; value discarded")
     elif grounding is None and mentioned and is_low(confidence):
         reasons.append(f"{name}: not found, though the document seems to mention it")
     if is_low(confidence) and not reasons:

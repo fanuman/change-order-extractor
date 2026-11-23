@@ -149,6 +149,12 @@ def test_invented_quote_is_discarded() -> None:
     assert_reasons_explain_review(output)
 
 
+def test_value_its_quote_does_not_contain_is_discarded() -> None:
+    output = run(with_changes(date=quoted("11/02/2025", "Date: 03/14/2025")))
+    assert output["date"] == {"value": None, "confidence": 0.2}
+    assert "date: the quote 'Date: 03/14/2025' does not contain the value; value discarded" in output["review_reasons"]
+
+
 def test_not_a_change_order_lowers_every_value_but_not_the_nulls() -> None:
     reply = with_changes(is_change_order=False, project_name=NULL)
     output = run(reply)
