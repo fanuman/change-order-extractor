@@ -13,7 +13,6 @@ import os
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Protocol
-from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 from openai import (
@@ -23,6 +22,7 @@ from openai import (
     NotFoundError,
     OpenAI,
     OpenAIError,
+    UnprocessableEntityError,
 )
 from pydantic import ValidationError
 
@@ -34,7 +34,7 @@ from co_extract.prompts import (
     user_message,
 )
 
-DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
+DEFAULT_MODEL = "gpt-4o-mini"  # used when LLM_MODEL is not set, whatever the base URL
 JSON_MODE_ATTEMPTS = 2  # the first reply, plus one repair after showing the model its errors
 
 Message = dict[str, str]
@@ -72,18 +72,9 @@ class LLMConfig:
         missing = [name for name, value in (("LLM_API_KEY", api_key), ("LLM_BASE_URL", base_url)) if not value]
         if missing:
             raise ConfigError(f"missing {', '.join(missing)}: set it in .env (see .env.example) or the environment")
-        if not model:
-            if not _is_openai(base_url):
-                raise ConfigError(
-                    f"LLM_MODEL is required for {base_url}: "
-                    f"the default model {DEFAULT_OPENAI_MODEL} only exists on OpenAI"
-                )
-            model = DEFAULT_OPENAI_MODEL
-        return cls(api_key=api_key, base_url=base_url, model=model)
-
-
-def _is_openai(base_url: str) -> bool:
-    return urlparse(base_url).hostname == "api.openai.com"
+        # Only the key and URL are required, so a gateway in front of OpenAI works as is. If the default
+        # model does not exist at the provider, the error says to set LLM_MODEL.
+        return cls(api_key=api_key, base_url=base_url, model=model or DEFAULT_MODEL)
 
 
 # --- Extraction ----------------------------------------------------------------------------
@@ -121,7 +112,7 @@ class OpenAICompatibleExtractor:
         """Structured output first; JSON mode if the provider rejects it or replies in another shape."""
         try:
             return self._extract_structured(user)
-        except (BadRequestError, ValidationError) as exc:
+        except (BadRequestError, UnprocessableEntityError, ValidationError) as exc:
             structured_error = exc  # Python deletes `exc` when the except block ends
 
         try:
@@ -137,7 +128,7 @@ class OpenAICompatibleExtractor:
             messages=[_message("system", SYSTEM_PROMPT), user],
             response_format=RawExtraction,
         )
-        reply = completion.choices[0].message
+        reply = _first_message(completion)
         if reply.refusal:
             raise ExtractionFailed(f"the model refused: {reply.refusal}")
         if reply.parsed is None:
@@ -154,7 +145,7 @@ class OpenAICompatibleExtractor:
                 messages=messages,
                 response_format={"type": "json_object"},
             )
-            reply: str = completion.choices[0].message.content or ""
+            reply: str = _first_message(completion).content or ""
             try:
                 return RawExtraction.model_validate_json(reply)
             except ValidationError as exc:
@@ -192,6 +183,14 @@ class OpenAICompatibleExtractor:
 
 def _message(role: str, content: str) -> Message:
     return {"role": role, "content": content}
+
+
+def _first_message(completion: Any) -> Any:
+    """The reply's message. Some providers return no choices at all, for example when a content filter fires."""
+    choices = getattr(completion, "choices", None)
+    if not choices or choices[0].message is None:
+        raise ExtractionFailed("the provider returned no message")
+    return choices[0].message
 
 
 def _explain(exc: OpenAIError, config: LLMConfig) -> ExtractionFailed:

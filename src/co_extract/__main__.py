@@ -37,7 +37,8 @@ def main(argv: list[str] | None = None) -> int:
 
     usage = extractor.usage
     print(
-        f"llm: {usage.calls} call(s), {usage.prompt_tokens} prompt + {usage.completion_tokens} completion tokens",
+        f"llm: {extractor.config.model}, {usage.calls} call(s), "
+        f"{usage.prompt_tokens} prompt + {usage.completion_tokens} completion tokens",
         file=sys.stderr,
     )
     return 0

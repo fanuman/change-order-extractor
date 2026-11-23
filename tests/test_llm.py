@@ -7,7 +7,13 @@ from typing import Any
 
 import httpx2
 import pytest
-from openai import AuthenticationError, BadRequestError, LengthFinishReasonError, NotFoundError
+from openai import (
+    AuthenticationError,
+    BadRequestError,
+    LengthFinishReasonError,
+    NotFoundError,
+    UnprocessableEntityError,
+)
 
 from co_extract import llm
 from co_extract.llm import ConfigError, ExtractionFailed, LLMConfig, OpenAICompatibleExtractor
@@ -148,6 +154,19 @@ def test_falls_back_to_json_mode_when_schema_is_rejected() -> None:
     assert json_call["messages"][0]["content"] == JSON_MODE_SYSTEM_PROMPT
 
 
+def test_falls_back_to_json_mode_on_422() -> None:
+    rejected = api_error(UnprocessableEntityError, 422, "response_format json_schema is not supported")
+    client = FakeClient(parse=raises(rejected), create=json_replies(VALID_REPLY))
+    assert extract_with(client).amount.text == "(1,250.00)"
+    assert client.methods == ["parse", "create"]
+
+
+def test_reply_without_choices_is_reported() -> None:
+    client = FakeClient(parse=lambda **_: SimpleNamespace(choices=[], usage=None))
+    with pytest.raises(ExtractionFailed, match="the provider returned no message"):
+        extract_with(client)
+
+
 def test_falls_back_to_json_mode_when_structured_reply_has_wrong_shape() -> None:
     def wrong_shape(**_: Any) -> Any:
         RawExtraction.model_validate_json("{}")  # what the SDK does with a reply that ignores the schema
@@ -247,15 +266,10 @@ def test_config_requires_key_and_base_url(env: Callable[..., None]) -> None:
         LLMConfig.from_env()
 
 
-def test_config_defaults_the_model_on_openai(env: Callable[..., None]) -> None:
-    env(LLM_API_KEY="k", LLM_BASE_URL="https://api.openai.com/v1")
-    assert LLMConfig.from_env().model == llm.DEFAULT_OPENAI_MODEL
-
-
-def test_config_requires_a_model_for_other_providers(env: Callable[..., None]) -> None:
-    env(LLM_API_KEY="k", LLM_BASE_URL="https://api.x.ai/v1")
-    with pytest.raises(ConfigError, match="LLM_MODEL is required"):
-        LLMConfig.from_env()
+@pytest.mark.parametrize("base_url", ["https://api.openai.com/v1", "https://openai-gateway.example.com/v1"])
+def test_config_needs_only_key_and_base_url(env: Callable[..., None], base_url: str) -> None:
+    env(LLM_API_KEY="k", LLM_BASE_URL=base_url)
+    assert LLMConfig.from_env().model == llm.DEFAULT_MODEL
 
 
 def test_config_uses_the_given_model(env: Callable[..., None]) -> None:
